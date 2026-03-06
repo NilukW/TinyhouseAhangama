@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Villa Receipt</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+  :root {
+    --sand:#f5f0e8; --warm-white:#faf8f4;
+    --terracotta:#c17a4a; --deep:#2c2416;
+    --mid:#6b5c47; --light:#a89880;
+    --line:#ddd4c4; --accent:#8b6914;
+  }
+  body { font-family:'Jost',sans-serif; background:#e8e0d4; min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:40px 20px; gap:20px; }
+  .controls { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; background:white; padding:16px 24px; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,0.1); width:100%; max-width:780px; }
+  .controls button { font-family:'Jost',sans-serif; font-size:13px; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; padding:10px 22px; border:none; border-radius:8px; cursor:pointer; transition:all 0.2s; }
+  .btn-print { background:var(--terracotta); color:white; }
+  .btn-print:hover { background:#a8673d; }
+  .btn-clear { background:var(--sand); color:var(--mid); border:1px solid var(--line); }
+  .btn-clear:hover { background:var(--line); }
+  .controls span { font-size:13px; color:var(--mid); display:flex; align-items:center; font-weight:300; letter-spacing:0.04em; }
+  .receipt { width:100%; max-width:780px; background:var(--warm-white); border-radius:4px; overflow:hidden; box-shadow:0 8px 40px rgba(44,36,22,0.18); }
+  .receipt::before { content:''; display:block; height:6px; background:linear-gradient(90deg,var(--terracotta),var(--accent),var(--terracotta)); }
+  .header { padding:40px 52px 28px; display:grid; grid-template-columns:1fr auto; align-items:start; gap:20px; border-bottom:1px solid var(--line); }
+  .villa-name { font-family:'Cormorant Garamond',serif; font-size:34px; font-weight:300; letter-spacing:0.06em; color:var(--deep); line-height:1.1; }
+  .villa-tagline { font-size:11px; font-weight:300; letter-spacing:0.18em; text-transform:uppercase; color:var(--terracotta); margin-top:4px; }
+  .villa-contact { font-size:12px; font-weight:300; color:var(--mid); line-height:1.8; margin-top:12px; letter-spacing:0.02em; }
+  [contenteditable] { outline:none; border-radius:3px; transition:background 0.15s; min-width:4px; display:inline-block; }
+  [contenteditable]:hover { background:rgba(193,122,74,0.08); }
+  [contenteditable]:focus { background:rgba(193,122,74,0.12); }
+  .receipt-meta { text-align:right; }
+  .receipt-label { font-family:'Cormorant Garamond',serif; font-size:28px; font-weight:300; font-style:italic; color:var(--terracotta); letter-spacing:0.04em; }
+  .meta-row { font-size:12px; font-weight:300; color:var(--mid); letter-spacing:0.06em; margin-top:6px; line-height:1.9; }
+  .meta-key { color:var(--light); text-transform:uppercase; font-size:10px; letter-spacing:0.12em; }
+  .guest-section { padding:28px 52px; display:grid; grid-template-columns:1fr 1fr; gap:32px; border-bottom:1px solid var(--line); background:var(--sand); }
+  .section-label { font-size:9px; font-weight:500; letter-spacing:0.2em; text-transform:uppercase; color:var(--terracotta); margin-bottom:10px; }
+  .guest-name { font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:400; color:var(--deep); line-height:1.2; }
+  .stay-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .stay-sub { font-size:11px; font-weight:300; color:var(--light); margin-top:3px; }
+  .stay-select { font-family:'Cormorant Garamond',serif; font-size:17px; font-weight:400; color:var(--deep); background:transparent; border:none; border-bottom:1px dashed var(--light); border-radius:0; padding:3px 22px 3px 0; margin-top:4px; cursor:pointer; outline:none; appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23a89880'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 4px center; transition:border-color 0.2s; width:100%; }
+  .stay-select:hover, .stay-select:focus { border-bottom-color:var(--terracotta); }
+  .stay-select-sm { font-family:'Jost',sans-serif; font-size:15px; width:64px; }
+  .stay-date { font-family:'Cormorant Garamond',serif; font-size:17px; font-weight:400; color:var(--deep); background:transparent; border:none; border-bottom:1px dashed var(--light); border-radius:0; padding:3px 2px 3px 0; margin-top:4px; cursor:pointer; outline:none; width:100%; transition:border-color 0.2s; }
+  .stay-date:hover, .stay-date:focus { border-bottom-color:var(--terracotta); }
+  .stay-date::-webkit-calendar-picker-indicator { opacity:0.45; cursor:pointer; filter:sepia(1) saturate(2) hue-rotate(340deg); }
+  .guests-row { display:flex; gap:16px; align-items:flex-start; margin-top:4px; }
+  .mini-label { font-size:9px; letter-spacing:0.14em; text-transform:uppercase; color:var(--light); margin-bottom:3px; }
+  .charges-section { padding:32px 52px 24px; }
+  .charges-section .section-label { margin-bottom:16px; }
+  table { width:100%; border-collapse:collapse; }
+  thead tr { border-bottom:1px solid var(--line); }
+  thead th { font-size:9px; font-weight:500; letter-spacing:0.18em; text-transform:uppercase; color:var(--light); padding:0 0 10px; text-align:left; }
+  thead th:nth-child(3), thead th:nth-child(4) { text-align:right; }
+  thead th:last-child { text-align:right; }
+  tbody tr { border-bottom:1px solid rgba(221,212,196,0.4); }
+  tbody td { padding:11px 0; font-size:13.5px; font-weight:300; color:var(--deep); vertical-align:middle; letter-spacing:0.01em; }
+  tbody td:nth-child(3), tbody td:nth-child(4) { text-align:right; }
+  tbody td:nth-child(3), thead th:nth-child(3) { padding-left:52px; }
+  tbody td:nth-child(4), thead th:nth-child(4) { padding-left:52px; }
+  td.qty, td.unit { color:var(--mid); font-size:12px; }
+  .add-row { display:inline-flex; align-items:center; gap:6px; font-family:'Jost',sans-serif; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--terracotta); background:none; border:1px dashed var(--terracotta); border-radius:4px; padding:6px 14px; cursor:pointer; margin-top:12px; opacity:0.7; transition:opacity 0.2s; }
+  .add-row:hover { opacity:1; }
+  .del-row { background:none; border:none; color:var(--light); cursor:pointer; font-size:18px; padding:0 6px; line-height:1; transition:color 0.15s; }
+  .del-row:hover { color:#c0392b; }
+  .totals-section { padding:0 52px 32px; display:flex; justify-content:flex-end; }
+  .totals-box { width:260px; border-top:1px solid var(--line); padding-top:16px; }
+  .totals-row { display:flex; justify-content:space-between; align-items:baseline; padding:5px 0; font-size:13px; font-weight:300; color:var(--mid); letter-spacing:0.02em; }
+  .totals-row.grand { border-top:1.5px solid var(--deep); margin-top:8px; padding-top:12px; font-family:'Cormorant Garamond',serif; font-size:20px; font-weight:500; color:var(--deep); letter-spacing:0.04em; }
+  .totals-row.grand .amount { color:var(--terracotta); }
+  .footer { background:var(--sand); border-top:1px solid var(--line); padding:24px 52px; display:grid; grid-template-columns:1fr auto; align-items:center; gap:24px; }
+  .payment-status { display:inline-flex; align-items:center; gap:8px; }
+  .status-dot { width:8px; height:8px; border-radius:50%; background:#5a9e6f; flex-shrink:0; }
+  .status-dot.pending { background:#e0a040; }
+  .status-text { font-size:11px; letter-spacing:0.14em; text-transform:uppercase; font-weight:500; color:var(--mid); }
+  .payment-method { font-size:12px; font-weight:300; color:var(--light); margin-top:4px; letter-spacing:0.04em; }
+  .thank-you { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:16px; font-weight:300; color:var(--mid); text-align:right; line-height:1.5; }
+  .currency-select { font-family:'Jost',sans-serif; font-size:11px; border:1px solid var(--line); border-radius:4px; padding:4px 8px; background:var(--warm-white); color:var(--mid); letter-spacing:0.06em; cursor:pointer; }
+  @media print {
+    body { background:white; padding:0; }
+    .controls, .no-print { display:none; }
+    .receipt { box-shadow:none; border-radius:0; max-width:100%; }
+    .add-row, .del-row { display:none; }
+    [contenteditable] { background:none !important; }
+    .stay-select, .stay-date, .currency-select { border-color:transparent !important; background-image:none !important; appearance:none; -webkit-appearance:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="controls">
+  <span>✏️ Click any text to edit · </span>
+  <select class="currency-select" id="currencySelect" onchange="updateCurrency()">
+    <option value="€">€ EUR</option>
+    <option value="$">$ USD</option>
+    <option value="£">£ GBP</option>
+    <option value="₹">₹ INR</option>
+    <option value="฿">฿ THB</option>
+    <option value="Rp">Rp IDR</option>
+    <option value="Rs">Rs LKR</option>
+  </select>
+  <button class="btn-clear no-print" onclick="clearForm()">Clear / New</button>
+  <button class="btn-print no-print" onclick="window.print()">🖨 Print / Save PDF</button>
+</div>
+
+<div class="receipt" id="receipt">
+
+  <div class="header">
+    <div>
+      <div class="villa-name"><span contenteditable spellcheck="false">Tiny House</span></div>
+      <div class="villa-tagline"><span contenteditable spellcheck="false">Ahangama</span></div>
+      <div class="villa-contact">
+        <span contenteditable spellcheck="false">No 03, Pokuna road, Ahangama, Sri Lanka</span><br>
+        <span contenteditable spellcheck="false">+94 77 668 3713 &nbsp;·&nbsp; tinyhouseahangama@gmail.com</span>
+      </div>
+    </div>
+    <div class="receipt-meta">
+      <div class="receipt-label">Receipt</div>
+      <div class="meta-row"><span class="meta-key">No. &nbsp;</span><span contenteditable spellcheck="false" id="receiptNo">2026-0001</span></div>
+      <div class="meta-row"><span class="meta-key">Date &nbsp;</span><span contenteditable spellcheck="false" id="receiptDate">06 March 2026</span></div>
+      <div class="meta-row"><span class="meta-key">Source &nbsp;</span><span contenteditable spellcheck="false">Direct Booking</span></div>
+    </div>
+  </div>
+
+  <div class="guest-section">
+    <div>
+      <div class="section-label">Guest</div>
+      <div class="guest-name"><span contenteditable spellcheck="false">John &amp; Mary Smith</span></div>
+    </div>
+    <div>
+      <div class="section-label">Stay Details</div>
+      <div class="stay-grid">
+        <div>
+          <div class="section-label" style="margin-bottom:2px;">Room</div>
+          <select class="stay-select" id="roomSelect" onchange="updateRoomSub()">
+            <option value="Room 1|Sea View">Deluxe King Room</option>
+            <option value="Room 2|Garden View" selected>Family Studio</option>
+          </select>
+          <div class="stay-sub" id="roomSub">Garden View</div>
+        </div>
+        <div>
+          <div class="section-label" style="margin-bottom:2px;">Guests</div>
+          <div class="guests-row">
+            <div>
+              <div class="mini-label">Adults</div>
+              <select class="stay-select stay-select-sm" id="adultsSelect">
+                <option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option>
+              </select>
+            </div>
+            <div>
+              <div class="mini-label">Children</div>
+              <select class="stay-select stay-select-sm" id="childrenSelect">
+                <option selected>0</option><option>1</option><option>2</option><option>3</option><option>4</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="section-label" style="margin-bottom:2px;">Check-in</div>
+          <input type="date" class="stay-date" id="checkinDate" value="2026-03-08">
+          <div class="stay-sub">After 14:00</div>
+        </div>
+        <div>
+          <div class="section-label" style="margin-bottom:2px;">Check-out</div>
+          <input type="date" class="stay-date" id="checkoutDate" value="2026-03-12">
+          <div class="stay-sub">Before 11:00</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="charges-section">
+    <div class="section-label">Charges</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:34%">Description</th>
+          <th style="width:10%">Qty</th>
+          <th style="width:22%">Unit Price</th>
+          <th style="width:22%">Amount</th>
+          <th style="width:12%"></th>
+        </tr>
+      </thead>
+      <tbody id="itemsBody">
+        <tr>
+          <td><span contenteditable spellcheck="false">Room 2 — Garden View</span></td>
+          <td class="qty"><span contenteditable spellcheck="false" class="qty-val">4</span> nights</td>
+          <td class="unit"><span class="cur">€</span><span contenteditable spellcheck="false" class="price-val">90.00</span></td>
+          <td><span class="cur">€</span><span class="line-total">360.00</span></td>
+          <td><button class="del-row">×</button></td>
+        </tr>
+      </tbody>
+    </table>
+    <button class="add-row" id="addRowBtn">+ Add item</button>
+  </div>
+
+  <div class="totals-section">
+    <div class="totals-box">
+      <div class="totals-row"><span>Subtotal</span><span><span class="cur">€</span><span id="subtotalAmt">481.00</span></span></div>
+      <div class="totals-row"><span>Tax / VAT (<span contenteditable spellcheck="false" id="taxRate">0</span>%)</span><span><span class="cur">€</span><span id="taxAmt">0.00</span></span></div>
+      <div class="totals-row"><span>Discount</span><span>− <span class="cur">€</span><span contenteditable spellcheck="false" id="discountAmt">0.00</span></span></div>
+      <div class="totals-row grand"><span>Total Due</span><span class="amount"><span class="cur">€</span><span id="grandTotal">481.00</span></span></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div>
+      <div class="payment-status">
+        <div class="status-dot" id="statusDot"></div>
+        <span class="status-text" id="statusText">Paid</span>
+      </div>
+      <div class="payment-method"><span contenteditable spellcheck="false">Cash &nbsp;·&nbsp; 06 March 2026</span></div>
+      <div style="margin-top:10px;">
+        <button id="toggleBtn" class="no-print" style="font-family:'Jost',sans-serif;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;background:none;border:1px solid var(--line);border-radius:4px;padding:4px 10px;cursor:pointer;color:var(--mid)">Toggle Paid / Pending</button>
+      </div>
+    </div>
+    <div class="thank-you">Thank you for staying<br>with us.</div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  var isPaid = true;
+
+  function getCurrency() {
+    return document.getElementById('currencySelect').value;
+  }
+
+  function updateCurrency() {
+    var sym = getCurrency();
+    document.querySelectorAll('.cur').forEach(function(el) { el.textContent = sym; });
+  }
+  window.updateCurrency = updateCurrency;
+
+  function updateRoomSub() {
+    var parts = document.getElementById('roomSelect').value.split('|');
+    document.getElementById('roomSub').textContent = parts[1] || '';
+  }
+  window.updateRoomSub = updateRoomSub;
+
+  function recalc() {
+    var subtotal = 0;
+    document.querySelectorAll('#itemsBody tr').forEach(function(tr) {
+      var qtyEl = tr.querySelector('.qty-val');
+      var priceEl = tr.querySelector('.price-val');
+      var qty = parseFloat(qtyEl ? qtyEl.textContent : 0) || 0;
+      var price = parseFloat(priceEl ? priceEl.textContent : 0) || 0;
+      var total = qty * price;
+      var lt = tr.querySelector('.line-total');
+      if (lt) lt.textContent = total.toFixed(2);
+      subtotal += total;
+    });
+    document.getElementById('subtotalAmt').textContent = subtotal.toFixed(2);
+    var taxRate = parseFloat(document.getElementById('taxRate').textContent) || 0;
+    var taxAmt = subtotal * taxRate / 100;
+    document.getElementById('taxAmt').textContent = taxAmt.toFixed(2);
+    var discount = parseFloat(document.getElementById('discountAmt').textContent) || 0;
+    document.getElementById('grandTotal').textContent = Math.max(0, subtotal + taxAmt - discount).toFixed(2);
+  }
+
+  function attachInputListeners(row) {
+    row.querySelectorAll('.qty-val, .price-val').forEach(function(el) {
+      el.addEventListener('input', recalc);
+      el.addEventListener('blur', recalc);
+    });
+  }
+
+  function makeRow(sym) {
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><span contenteditable spellcheck="false">New Item</span></td>' +
+      '<td class="qty"><span contenteditable spellcheck="false" class="qty-val">1</span> ×</td>' +
+      '<td class="unit"><span class="cur">' + sym + '</span><span contenteditable spellcheck="false" class="price-val">0.00</span></td>' +
+      '<td><span class="cur">' + sym + '</span><span class="line-total">0.00</span></td>' +
+      '<td><button class="del-row">×</button></td>';
+    return tr;
+  }
+
+  // Event delegation — delete rows
+  document.getElementById('itemsBody').addEventListener('click', function(e) {
+    if (e.target.classList.contains('del-row')) {
+      e.target.closest('tr').remove();
+      recalc();
+    }
+  });
+
+  // Add row button
+  document.getElementById('addRowBtn').addEventListener('click', function() {
+    var tr = makeRow(getCurrency());
+    document.getElementById('itemsBody').appendChild(tr);
+    attachInputListeners(tr);
+    recalc();
+  });
+
+  // Toggle paid/pending
+  document.getElementById('toggleBtn').addEventListener('click', function() {
+    isPaid = !isPaid;
+    document.getElementById('statusDot').className = 'status-dot' + (isPaid ? '' : ' pending');
+    document.getElementById('statusText').textContent = isPaid ? 'Paid' : 'Pending Payment';
+  });
+
+  // Tax & discount live recalc
+  document.getElementById('taxRate').addEventListener('input', recalc);
+  document.getElementById('discountAmt').addEventListener('input', recalc);
+
+  // Attach to existing rows
+  attachInputListeners(document.getElementById('itemsBody'));
+
+  function clearForm() {
+    if (!confirm('Clear all data and start a new receipt?')) return;
+    document.querySelector('.villa-name span').textContent = 'Tiny House';
+    document.getElementById('receiptNo').textContent = '';
+    document.getElementById('receiptDate').textContent = new Date().toLocaleDateString('en-GB', {day:'2-digit', month:'long', year:'numeric'});
+    document.getElementById('roomSelect').selectedIndex = 0;
+    updateRoomSub();
+    document.getElementById('adultsSelect').value = '2';
+    document.getElementById('childrenSelect').value = '0';
+    document.getElementById('checkinDate').value = '';
+    document.getElementById('checkoutDate').value = '';
+    var sym = getCurrency();
+    var tbody = document.getElementById('itemsBody');
+    tbody.innerHTML = '';
+    var tr = makeRow(sym);
+    tr.querySelector('span[contenteditable]').textContent = 'Room — ';
+    tr.querySelector('.qty-val').textContent = '1';
+    tr.querySelector('td.qty').innerHTML = '<span contenteditable spellcheck="false" class="qty-val">1</span> nights';
+    tbody.appendChild(tr);
+    attachInputListeners(tr);
+    document.getElementById('discountAmt').textContent = '0.00';
+    document.getElementById('taxRate').textContent = '0';
+    recalc();
+  }
+  window.clearForm = clearForm;
+
+})();
+</script>
+</body>
+</html>
